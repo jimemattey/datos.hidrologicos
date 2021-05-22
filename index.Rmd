@@ -1,0 +1,89 @@
+---
+title: "Datos hidrologicos"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Analisis de datos de las cuencas Estrella y Banano
+A continuación se presenta un analisis explorativo de las estaciones Pandora y Banano, los cuales comprenden los ríos Estrella y Banano, por lo cual el siguiente estudio tiene como objetivo determinar las relaciones entre ambos caudales, así como tambien el volumen de las cuencas en un enfoque diario, mensual y anual.  
+
+Aquí se presentan algunos de los datos, dimensiones que nos fueron  proporcionados para realizar dicho analisis. 
+```{r, echo = FALSE}
+
+inp <- read.csv("FDC.csv", na.strings="")
+
+head(inp)
+
+inp[!complete.cases(inp),]
+
+```
+## Datos Hidrológicos relacionados con las series de tiempo de Caudal.
+Con respecto a las series de tiempo de Caudal, se aprecia en el siguiente gráfico, que el río Banano así como tambien el río estrella, tienen unos picos altos en un tiempo determinado, especificamente por que pertecen a la zona del caribe, por lo tanto su volumen tiene a aumentar con más facilidad con respecto a otros ríos del país. 
+
+```{r,echo = FALSE}
+plot(inp[,2],type = "l",col="red",main="Volumen de agua por tiempo",xlab="Fecha",ylab="Volumen del caudal")
+lines(inp[,3], col="blue")
+
+```
+
+## Promedio de los caudales diarios. 
+Aquí se obtiene un analisis más detallado sobre el promedio de las cuencas, se evidencia los siguientes histogramas, como el promedio hidrico diario del río Banano es superior, en comparacion con el río Estrella.
+
+
+```{r,echo = FALSE}
+summary(inp[,2:3])
+hist(inp[,2],col="red",main="Histograma Río Estrella",xlab="Rango absoluto",ylab="Volumen de agua por día")
+hist(inp[,3],col="blue",main="Histograma Río Banano",xlab="Rango absoluto",ylab="Volumen de agua por día")
+```
+
+```{r,echo = FALSE}
+names(inp) <- c("fecha","Estrella", "Banano")
+attach(inp)
+```
+
+
+# Analisis de datos hidrologicos temporales
+
+### Caudal Anual
+Se representa en el presente grafico, el caudal anual del río estrella, el cual esta señalado por una línea roja y  se encuentra con una cantidad hidrica inferior con respecto al río Banano, el cual esta determinado por puntos y tiene altos niveles de agua anuales. 
+
+```{r,echo = FALSE}
+tempdate <- strptime(inp[,1], format= "%d/%m/%Y")
+
+MAQ_Estrella <- tapply(inp[,2], format(tempdate, format= "%Y"), FUN= sum)
+MAQ_Banano <- tapply(inp[,3], format(tempdate, format= "%Y"), FUN= sum)
+write.csv(rbind(MAQ_Estrella, MAQ_Banano), file = "MAQ.csv")
+
+plot(MAQ_Banano, ylim= c(100,3000),col="green",main="Caudal anual de los Ríos Estrella y Banano",xlab="tiempo",ylab="Volumen del Caudal")
+lines(MAQ_Estrella, col="violet")
+
+```
+
+### Caudal mensual de datos hidrologicos
+De igual manera como en la sección anterior,el río estrella presenta menores niveles de agua mensuales en relacion con el río Banano, sin embargo es importante señalar que en ambas cuencas el rango de los niveles de agua de forma mensual no difieren en gran medida. .
+```{r,echo = FALSE}
+MMQ_Estrella <- tapply(Estrella, format(tempdate, format= "%m"), FUN= sum)
+MMQ_Banano <- tapply(Banano, format(tempdate, format= "%m"), FUN= sum)
+plot(MMQ_Banano, ylim= c(100,3000),col="green",main="Caudal mensual de los Ríos Estrella y Banano",xlab="tiempo",ylab="Volumen del Caudal")
+lines(MMQ_Estrella, col="violet")
+
+```
+
+# Analisis de correlación
+Efectivamente al comparar las cuencas, sus series de tiempo y volumen de caudal, el río Banano y Estrella, por los datos propocionados adquieren una correlacion exacta tal como lo evidencia el grafico presente.
+
+```{r,echo = FALSE}
+corinp <- cor(inp[,2:3], method= "spearman")
+plot(Estrella,Banano,col="orange", main="Analisis correlacional de las cuencas Estrella y Banano")
+```
+
+# Modelo de regresion lineal de los datos hidrologicos
+Aquí se presentan una serie de diagnosticos, sobre la regresion lineal de las cuencas Banano y Estrella. 
+```{r,echo = FALSE}
+inp.lm <- lm(inp[,2] ~ inp[,3], data=inp)
+summary(inp.lm)
+plot(inp.lm,col="yellow",main="Cuencas Estrella y Banano")
+```
